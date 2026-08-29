@@ -1,0 +1,12 @@
+[project]
+name = "refill"
+version = "0.1.0"
+description = "Refill: caregiver refill-denial chase agent with a deterministic eligibility-calculator veto over Gemini."
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+include = ["validator*", "agent*", "memory*", "artifacts*", "job*"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

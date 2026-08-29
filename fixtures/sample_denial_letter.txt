@@ -1,0 +1,25 @@
+*** THIS IS A SYNTHETIC SAMPLE LETTER. NO REAL PATIENT DATA. ***
+*** Fabricated for the REFILL hackathon demo only. Do not treat as PHI. ***
+
+SAMPLE PAYER — Not a real insurance company
+Prior Authorization Denial Notice
+
+Date: 2026-01-15
+Member: SAMPLE MEMBER (fictional)
+
+Medication: Enbrel (etanercept) 50mg/mL
+NDC: 58406-0435-1
+Plan: Standard
+
+Reason for denial: Refill too soon. Our records show your last fill was
+within the plan's standard refill window and does not yet qualify for
+early refill under your plan's rules.
+
+Last fill date: 2026-01-01
+Days supply: 30
+
+If you believe this determination is in error, you may appeal by calling
+the number on the back of your member ID card, or by submitting a written
+appeal within 60 days of this notice.
+
+*** END OF SYNTHETIC SAMPLE. Fabricated for demo purposes only. ***
