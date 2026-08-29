@@ -1,30 +1,29 @@
-PY ?= python3
-GCP_PROJECT ?= $(error set GCP_PROJECT)
+PY ?= $(if $(wildcard ../../.venv/bin/python),../../.venv/bin/python,python3)
+GCP_PROJECT ?= your-project-id
 GCP_REGION ?= us-central1
 BUCKET ?= $(GCP_PROJECT)-refill-artifacts
 JOB_NAME ?= refill-chase
 SCHEDULER_NAME ?= refill-followup-scheduler
 
-.PHONY: deploy demo chase tick forget test teardown
+.PHONY: deploy demo job tick test teardown
 
 test:
-	$(PY) -m pytest tests/ -v
+	PYTHONPATH=.:../shared $(PY) -m pytest tests/ -v
 
 deploy:
-	@echo "infra/deploy.sh not yet implemented; see LIMITATIONS.md."
-	@test -f infra/deploy.sh && bash infra/deploy.sh $(GCP_PROJECT) $(GCP_REGION) $(BUCKET) $(JOB_NAME) $(SCHEDULER_NAME) || exit 1
+	@echo "Refill has no infra/deploy.sh yet (see LIMITATIONS.md 'Build status')."
+	@echo "The Cloud Run Job entrypoint itself is real and runnable:"
+	@echo "  REFILL_LAST_FILL=2026-08-01 make job"
+	@exit 1
+
+job:
+	PYTHONPATH=.:../shared $(PY) -m job.main
 
 demo:
-	@test -f infra/demo.sh && bash infra/demo.sh $(GCP_PROJECT) $(GCP_REGION) $(JOB_NAME) $(BUCKET) || echo "demo.sh pending, run 'make test' for the validator/calculator today"
-
-chase:
-	@test -f job/main.py && $(PY) -m job.main --letter $(LETTER) --last-fill $(LAST_FILL) || echo "job/main.py pending"
+	PYTHONPATH=.:../shared $(PY) demo_local.py
 
 tick:
 	gcloud run jobs execute $(JOB_NAME) --region $(GCP_REGION) --project $(GCP_PROJECT) --wait
-
-forget:
-	@test -f memory/__init__.py -a -s memory/__init__.py && $(PY) -m memory forget --profile $(PROFILE) --fact $(FACT) || echo "memory/ pending"
 
 teardown:
 	@test -f infra/teardown.sh && bash infra/teardown.sh $(GCP_PROJECT) $(GCP_REGION) $(BUCKET) $(JOB_NAME) $(SCHEDULER_NAME) || echo "nothing deployed yet"

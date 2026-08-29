@@ -73,3 +73,29 @@ def test_tool_errors_cleanly_on_bad_date_format():
 def test_agent_instruction_forbids_arguing_past_disagreement():
     agent, _log = _build()
     assert "MUST NOT argue" in agent.instruction or "authoritative" in agent.instruction
+
+
+def test_run_chat_refuses_to_run_without_an_api_key(monkeypatch):
+    """The live-agent entrypoint must stop loudly rather than fabricate a
+    conversation. A silent fallback here would mean the 'multi-turn ADK
+    dialogue' claim could be demonstrated with no model involved at all.
+    """
+    import pytest
+
+    from agent import run_chat
+
+    for var in run_chat.API_KEY_VARS:
+        monkeypatch.delenv(var, raising=False)
+
+    with pytest.raises(SystemExit) as excinfo:
+        run_chat.require_api_key()
+    assert "GOOGLE_API_KEY" in str(excinfo.value)
+
+
+def test_run_chat_proceeds_past_the_key_check_when_a_key_is_set(monkeypatch):
+    """Guard against the check being unconditional (which would make the
+    test above pass for the wrong reason)."""
+    from agent import run_chat
+
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key-not-used-for-a-call")
+    run_chat.require_api_key()  # must not raise
