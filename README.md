@@ -43,9 +43,11 @@ PY=.venv/bin/python make demo
 spine that ships inside this repo. There is no sibling directory to clone
 and no `PYTHONPATH` to export.
 
-Expected output: **68 passing tests**, and a demo that exits 0. Both run
+Expected output: **73 passing tests**, and a demo that exits 0. Both run
 fully offline, with no network calls, no GCP credentials, and no API key.
-If either needs one, that is a bug in this project.
+If either needs one, that is a bug in this project. (`make job`, below,
+is the exception: it runs the real Cloud Run Job entrypoint, including a
+live Gemini call, and does require an API key.)
 
 ## The validator (why this isn't a wrapper)
 
@@ -72,10 +74,13 @@ that restoring it blocks the run again.
 make test
 ```
 
-The full offline suite (68 tests) across the eligibility calculator, the
+The full offline suite (73 tests) across the eligibility calculator, the
 discrepancy validator, the denial letter parser, the dialogue state
-machine, the ADK agent wiring, Firestore-backed profile memory including
-deletion and correction, the packet writer, and the idempotent job tick.
+machine, the ADK agent wiring, `job/main.py`'s chase path invoking that
+ADK agent (with the model call stubbed and the real tool closure driven
+directly, so the calculator-adjudication logic under test is real),
+Firestore-backed profile memory including deletion and correction, the
+packet writer, and the idempotent job tick.
 
 ```bash
 make demo
@@ -88,14 +93,22 @@ issued case (`packet.pdf` written), the idempotency claim, the delayed
 follow-up tick, and a second chase session that skips already-known
 fields, then a `forget_fact` that makes the question come back. Each
 invariant is asserted as it goes, and the demo exits non-zero if any step
-does not hold.
+does not hold. `demo_local.py` exercises `job/tick.py` directly (a fake
+model response, matching its own claim above); it does not go through
+`job/main.py`.
 
 ```bash
 make job
 ```
 
 Runs `job/main.py`, the same Cloud Run Job entrypoint the cloud deploy
-invokes, against the offline Memory and Local backends.
+invokes, against the offline Memory and Local backends. **Chase mode
+requires `GOOGLE_API_KEY` (or `GEMINI_API_KEY`)**: it now calls the real
+ADK `LlmAgent` (`agent/refill_agent.py`) for one turn, through the same
+`InMemoryRunner` wiring `agent/run_chat.py`'s manual CLI uses, and there
+is no offline fallback on this path -- with no key set it raises loudly
+and exits non-zero rather than fabricating a conversation. `REFILL_MODE=followup`
+makes no model call and needs no key.
 
 ## Deploying to Google Cloud
 
@@ -131,6 +144,9 @@ clone. See `LIMITATIONS.md`.
   which fields are still missing, in what order.
 - `agent/refill_agent.py`: the ADK `LlmAgent` (Gemini 2.5 Flash) with the
   calculator bound in as a tool.
+- `agent/run_chat.py`: runs that `LlmAgent` against the live Gemini API
+  via an `InMemoryRunner`. `run_single_turn` is the shared entrypoint both
+  this module's own interactive CLI and `job/main.py`'s chase path call.
 - `memory/profile.py`: Firestore-backed profile memory keyed by user and
   plan, with explicit `forget_fact` and `correct_fact` paths.
 - `artifacts/packet.py`: the one-page reportlab PDF.
@@ -138,11 +154,15 @@ clone. See `LIMITATIONS.md`.
   `agentspine.run_tick`, plus the delayed follow-up tick that appends a
   second `log.jsonl` entry.
 - `job/main.py`: the Cloud Run Job entrypoint. `REFILL_MODE` selects
-  chase or followup.
+  chase or followup. Chase mode calls the real ADK agent
+  (`agent/run_chat.py::run_single_turn`) for its date proposal; the
+  calculator still adjudicates it via `job/tick.py`.
 - `agentspine/`: the shared spine this repo runs on.
 - `fixtures/sample_denial_letter.txt`: synthetic sample, clearly marked,
   no real patient data.
-- `tests/`: 68 offline tests, no network and no model calls.
+- `tests/`: 73 offline tests, no network and no model calls (the ADK
+  agent's own text-generation call is stubbed in `tests/test_job_main.py`;
+  the tool closure it calls is real, unstubbed code).
 
 ## Bounded authority
 

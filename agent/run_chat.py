@@ -57,6 +57,33 @@ async def _ask(runner, session_id: str, user_id: str, text: str) -> str:
     return final_text
 
 
+async def run_single_turn(
+    prompt: str, user_id: str, proposal_log: list[ProposalRecord]
+) -> str:
+    """Run exactly one turn of the Refill ADK agent against the live
+    Gemini API and return its final text reply.
+
+    This is what `job/main.py`'s chase path calls so the model that
+    proposes a date is the SAME `LlmAgent` + `InMemoryRunner` wiring this
+    module's interactive CLI already exercises manually -- one runner
+    implementation, two callers, not a parallel reimplementation on the
+    deployed path. `proposal_log` is populated by the
+    `propose_next_eligible_date` tool exactly as it is in `_chat` below.
+
+    Does NOT call `require_api_key()` itself; callers are expected to
+    call it first (both `main()` below and `job/main.py` do), so a
+    missing key fails before any session/runner is even constructed.
+    """
+    from google.adk.runners import InMemoryRunner
+
+    agent = build_refill_agent(proposal_log)
+    runner = InMemoryRunner(agent=agent, app_name=APP_NAME)
+    session = await runner.session_service.create_session(
+        app_name=APP_NAME, user_id=user_id
+    )
+    return await _ask(runner, session.id, user_id, prompt)
+
+
 async def _chat(opening: str, user_id: str, proposal_log: list[ProposalRecord]) -> None:
     from google.adk.runners import InMemoryRunner
 

@@ -1,8 +1,14 @@
 # Architecture: Refill
 
-**Status:** Every component below is implemented and unit-tested (64 tests,
-offline, no model/network calls). Cloud deploy scripts (`infra/`) are still
-pending; see `LIMITATIONS.md`.
+**Status:** Every component below is implemented and unit-tested (73 tests,
+offline; the ADK agent's model-generation call is stubbed in
+`tests/test_job_main.py`, but the tool closure it calls -- the calculator
+adjudication -- is real, unstubbed code). `job/main.py`'s chase path now
+calls the real ADK `LlmAgent` (see "Job entrypoint wiring" below); a live
+Gemini call was not exercised in this environment (no `GOOGLE_API_KEY` set
+here), only the "fails loudly with no key" branch. Cloud deploy scripts
+(`infra/`) are written but pending a live end-to-end run; see
+`LIMITATIONS.md`.
 
 ```mermaid
 flowchart LR
@@ -11,7 +17,8 @@ flowchart LR
   MEM[(Firestore<br/>profile memory)] --> DLG
   DLG -->|clarifying questions| USER((Caregiver))
   USER --> DLG
-  DLG --> LLM[agent/refill_agent.py<br/>Gemini 2.5 Flash, ADK LlmAgent]
+  DLG --> JOBMAIN[job/main.py<br/>Cloud Run Job entrypoint]
+  JOBMAIN -->|run_single_turn| LLM[agent/refill_agent.py<br/>Gemini 2.5 Flash, ADK LlmAgent]
   LLM -->|propose_next_eligible_date tool call| CALC{{validator/eligibility.py<br/>deterministic calculator}}
   CALC -->|agree| VALID[validator/refill_validator.py<br/>Verdict passed=True]
   CALC -->|disagree| INVALID[Verdict passed=False<br/>both dates in evidence]
@@ -34,9 +41,11 @@ flowchart LR
 | Denial letter parser | `agent/denial_letter.py` | Deterministic regex extraction of medication, NDC, plan, denial reason, last fill date, days supply. Missing fields stay `None` and drive clarifying questions rather than guesses. |
 | Dialogue state machine | `agent/dialogue.py` | `DialogueSession`: deterministic tracking of which required fields (`plan`, `days_supply`, `last_fill_date`) and optional fields (`prior_attempts`) are still unknown, with priority-ordered questioning and memory prefill. |
 | ADK dialogue agent | `agent/refill_agent.py` | Gemini 2.5 Flash `LlmAgent` with `propose_next_eligible_date` bound in as a `FunctionTool`. The tool runs the real calculator and returns AGREE/DISAGREE; the model's instruction forbids arguing past a DISAGREE. |
+| Live agent runner | `agent/run_chat.py` | Runs that `LlmAgent` against the real Gemini API through an ADK `InMemoryRunner`. `run_single_turn(prompt, user_id, proposal_log)` is the shared entrypoint: `main()` here is the interactive CLI, and `job/main.py`'s chase path (below) calls the same function. `require_api_key()` raises `SystemExit` naming the missing env var if neither `GOOGLE_API_KEY` nor `GEMINI_API_KEY` is set -- no offline fallback. |
+| Job entrypoint wiring | `job/main.py` | `_run_dialogue_agent` calls `require_api_key()` then `run_single_turn` for one turn on the chase's fields (medication, last fill date, days supply, plan, denial reason), parses the model's `model_claimed_date` out of the `propose_next_eligible_date` tool's log, and passes it into `ChaseInput.model_claimed_date` before calling `run_chase_tick`. This is the fix for the gap the Aug 31 judge panel flagged: previously chase mode read `REFILL_MODEL_CLAIMED_DATE` straight into the validator with zero model involvement on the deployed path. `tests/test_job_main.py::test_job_main_chase_invokes_the_real_adk_agent` asserts `_run_dialogue_agent(` appears in `main`'s source, so this can't silently regress. |
+| Job runner | `job/tick.py` | `run_chase_tick` wires `EligibilityValidator` + the packet writer through `agentspine.run_tick`. `append_followup_entry` is the later Scheduler tick: appends a second, genuinely time-delayed `log.jsonl` entry, idempotently. Makes no model call itself; `model_claimed_date` on the `ChaseInput` it receives is set by the caller. |
 | Profile memory | `memory/profile.py` | `MemoryService` (in-memory for tests, `FirestoreMemoryService` for real), keyed by `user_id::plan`. `remember_fact`, `correct_fact`, and `forget_fact` (explicit deletion, audit trail preserved but excluded from `active_facts`). |
 | Packet + log writer | `artifacts/packet.py` | Renders the one-page `packet.pdf` (reportlab): medication, NDC, plan, last fill, days supply, **calculator-derived** next eligible date, denial reason, phone script. |
-| Job runner | `job/tick.py` | `run_chase_tick` wires `EligibilityValidator` + the packet writer through `agentspine.run_tick`. `append_followup_entry` is the later Scheduler tick: appends a second, genuinely time-delayed `log.jsonl` entry, idempotently. |
 
 ## Why the validator has veto power
 

@@ -28,9 +28,15 @@ from validator.refill_validator import EligibilityValidator
 @dataclass
 class ChaseInput:
     """Everything the chase tick needs, already resolved by the dialogue
-    flow (agent/dialogue.py) before the job runs. The job itself makes no
-    model calls -- it only re-verifies the arithmetic and writes the
-    artifact, matching agentspine's "validator is deterministic" rule.
+    flow (agent/dialogue.py) before this tick runs. `model_claimed_date`
+    is set by the caller (`job/main.py` populates it from a real ADK
+    agent call, `demo_local.py`/tests set it directly) -- `run_chase_tick`
+    itself makes no model call, it only re-verifies the arithmetic and
+    writes the artifact, matching agentspine's "validator is
+    deterministic" rule. The validator recomputes the calculator's answer
+    from `last_fill_date`/`days_supply`/`plan` regardless of what
+    `model_claimed_date` says, so a model claim can never talk its way
+    past the calculator.
     """
 
     user_id: str
