@@ -1,0 +1,11 @@
+# Refill Cloud Run Job runtime deps.
+# Pinned to the versions the offline test suite passes against (.venv).
+google-adk==2.8.0
+google-genai==2.20.0
+google-cloud-firestore==2.29.0
+google-cloud-storage==3.13.1
+opentelemetry-api==1.42.1
+opentelemetry-sdk==1.42.1
+opentelemetry-exporter-gcp-trace==1.15.0
+reportlab==5.0.1
+pypdf==6.16.2

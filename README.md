@@ -4,6 +4,15 @@ Adult child managing a parent's specialty medication refill denial. Refill asks
 the questions a pharmacy would ask, computes eligibility itself, and produces
 a one-page packet and phone script before the caregiver calls the payer.
 
+Track: Collaborative Partner.
+
+**Status note:** the eligibility calculator, discrepancy validator, denial
+letter parser, dialogue state machine, ADK agent, Firestore-backed profile
+memory (with deletion), packet PDF writer, and the idempotent job tick are
+all implemented and pass 64 local tests. `infra/` (the `gcloud` deploy
+scripts and Cloud Scheduler wiring) is not written yet; see
+`LIMITATIONS.md`.
+
 ## The validator (why this isn't a wrapper)
 
 `validator/eligibility.py` is pure arithmetic:
@@ -49,8 +58,25 @@ restoring it blocks the run again.
 
 ```bash
 cd projects/refill
-../../.venv/bin/pytest tests/ -v
+../../.venv/bin/pip install -r requirements.txt   # once, into the shared repo-root venv
+make test
 ```
+
+Verified 66/66 passing.
+
+## Run the demo
+
+```bash
+make demo
+```
+
+Runs `demo_local.py`: a scripted transcript with zero network calls, zero
+GCP credentials, and a fake model response in place of Gemini. Walks the
+blocked case (model date disagrees with the calculator), the issued case
+(packet.pdf written), the idempotency claim, the delayed follow-up tick,
+and a second chase session that skips already-known fields, then a
+`forget_fact` that makes the question come back. Asserts each invariant
+as it goes; exits non-zero if any step doesn't hold.
 
 ## Bounded authority
 

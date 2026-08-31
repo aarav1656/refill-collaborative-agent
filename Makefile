@@ -1,29 +1,38 @@
+# Refill — everything runs from THIS directory. This repo is standalone:
+# `pip install -e .` puts agentspine and every dependency in your venv, so no
+# PYTHONPATH juggling and no sibling directories are required.
+#
+#   PY=/path/to/venv/bin/python make test
+# or just `make test` after activating the venv.
 PY ?= $(if $(wildcard ../../.venv/bin/python),../../.venv/bin/python,python3)
-GCP_PROJECT ?= your-project-id
+
 GCP_REGION ?= us-central1
-BUCKET ?= $(GCP_PROJECT)-refill-artifacts
+BUCKET ?= $(PROJECT_ID)-refill-artifacts
 JOB_NAME ?= refill-chase
 SCHEDULER_NAME ?= refill-followup-scheduler
 
-.PHONY: deploy demo job tick test teardown
+.PHONY: install deploy demo job tick test teardown
+
+install:
+	$(PY) -m pip install -e .
 
 test:
-	PYTHONPATH=.:../shared $(PY) -m pytest tests/ -v
-
-deploy:
-	@echo "Refill has no infra/deploy.sh yet (see LIMITATIONS.md 'Build status')."
-	@echo "The Cloud Run Job entrypoint itself is real and runnable:"
-	@echo "  REFILL_LAST_FILL=2026-08-01 make job"
-	@exit 1
-
-job:
-	PYTHONPATH=.:../shared $(PY) -m job.main
+	$(PY) -m pytest tests/ -v
 
 demo:
-	PYTHONPATH=.:../shared $(PY) demo_local.py
+	$(PY) demo_local.py
+
+job:
+	$(PY) -m job.main
+
+deploy:
+	@test -n "$(PROJECT_ID)" || { echo "usage: make deploy PROJECT_ID=<gcp-project>"; exit 1; }
+	bash infra/deploy.sh $(PROJECT_ID) $(GCP_REGION) $(BUCKET) $(JOB_NAME) $(SCHEDULER_NAME)
 
 tick:
-	gcloud run jobs execute $(JOB_NAME) --region $(GCP_REGION) --project $(GCP_PROJECT) --wait
+	@test -n "$(PROJECT_ID)" || { echo "usage: make tick PROJECT_ID=<gcp-project>"; exit 1; }
+	gcloud run jobs execute $(JOB_NAME) --region $(GCP_REGION) --project $(PROJECT_ID) --wait
 
 teardown:
-	@test -f infra/teardown.sh && bash infra/teardown.sh $(GCP_PROJECT) $(GCP_REGION) $(BUCKET) $(JOB_NAME) $(SCHEDULER_NAME) || echo "nothing deployed yet"
+	@test -n "$(PROJECT_ID)" || { echo "usage: make teardown PROJECT_ID=<gcp-project>"; exit 1; }
+	bash infra/teardown.sh $(PROJECT_ID) $(GCP_REGION) $(BUCKET) $(JOB_NAME) $(SCHEDULER_NAME)
