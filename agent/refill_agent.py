@@ -27,7 +27,7 @@ from google.adk.tools import FunctionTool
 
 from validator.eligibility import EligibilityError, compute_next_eligible
 
-MODEL = "gemini-3.5-flash"
+MODEL = "gemini-2.5-flash"  # gemini-3.5-flash does not exist as a Vertex AI publisher model (verified: 404 NOT_FOUND on live deploy); 2.5-flash is the real, available Gemini Flash model
 
 
 @dataclass

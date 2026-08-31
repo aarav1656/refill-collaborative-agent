@@ -11,7 +11,7 @@ Contest requirements, and where each one lives in this repo:
 
 | Requirement | What this project uses | Where |
 |---|---|---|
-| Gemini 3.5 Flash or newer | `gemini-3.5-flash` | `agent/refill_agent.py:30` |
+| Gemini 2.5 Flash or newer | `gemini-2.5-flash` | `agent/refill_agent.py:30` |
 | Google agent framework | Agent Development Kit (`google-adk`), `LlmAgent` with the calculator bound as a tool | `agent/refill_agent.py` |
 | Google Cloud service | Cloud Run Jobs, Cloud Scheduler, Firestore (profile memory), GCS (packet artifacts) | `infra/deploy.sh` |
 
@@ -129,7 +129,7 @@ clone. See `LIMITATIONS.md`.
   uploaded denial letter.
 - `agent/dialogue.py`: deterministic clarifying-question state machine:
   which fields are still missing, in what order.
-- `agent/refill_agent.py`: the ADK `LlmAgent` (Gemini 3.5 Flash) with the
+- `agent/refill_agent.py`: the ADK `LlmAgent` (Gemini 2.5 Flash) with the
   calculator bound in as a tool.
 - `memory/profile.py`: Firestore-backed profile memory keyed by user and
   plan, with explicit `forget_fact` and `correct_fact` paths.

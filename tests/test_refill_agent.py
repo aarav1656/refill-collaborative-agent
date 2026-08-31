@@ -20,7 +20,7 @@ def _build():
 def test_agent_is_llm_agent_with_gemini_flash():
     agent, _log = _build()
     assert isinstance(agent, LlmAgent)
-    assert agent.model == "gemini-3.5-flash"
+    assert agent.model == "gemini-2.5-flash"
     assert len(agent.tools) == 1
 
 

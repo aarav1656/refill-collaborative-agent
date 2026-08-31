@@ -11,7 +11,7 @@ flowchart LR
   MEM[(Firestore<br/>profile memory)] --> DLG
   DLG -->|clarifying questions| USER((Caregiver))
   USER --> DLG
-  DLG --> LLM[agent/refill_agent.py<br/>Gemini 3.5 Flash, ADK LlmAgent]
+  DLG --> LLM[agent/refill_agent.py<br/>Gemini 2.5 Flash, ADK LlmAgent]
   LLM -->|propose_next_eligible_date tool call| CALC{{validator/eligibility.py<br/>deterministic calculator}}
   CALC -->|agree| VALID[validator/refill_validator.py<br/>Verdict passed=True]
   CALC -->|disagree| INVALID[Verdict passed=False<br/>both dates in evidence]
@@ -33,7 +33,7 @@ flowchart LR
 | Discrepancy validator | `validator/refill_validator.py` | `EligibilityValidator`, an `agentspine.Validator`. Compares `context["model_claimed_date"]` to the calculator's result. Passes if they agree or the model made no claim yet; fails with both dates in `evidence` on disagreement. |
 | Denial letter parser | `agent/denial_letter.py` | Deterministic regex extraction of medication, NDC, plan, denial reason, last fill date, days supply. Missing fields stay `None` and drive clarifying questions rather than guesses. |
 | Dialogue state machine | `agent/dialogue.py` | `DialogueSession`: deterministic tracking of which required fields (`plan`, `days_supply`, `last_fill_date`) and optional fields (`prior_attempts`) are still unknown, with priority-ordered questioning and memory prefill. |
-| ADK dialogue agent | `agent/refill_agent.py` | Gemini 3.5 Flash `LlmAgent` with `propose_next_eligible_date` bound in as a `FunctionTool`. The tool runs the real calculator and returns AGREE/DISAGREE; the model's instruction forbids arguing past a DISAGREE. |
+| ADK dialogue agent | `agent/refill_agent.py` | Gemini 2.5 Flash `LlmAgent` with `propose_next_eligible_date` bound in as a `FunctionTool`. The tool runs the real calculator and returns AGREE/DISAGREE; the model's instruction forbids arguing past a DISAGREE. |
 | Profile memory | `memory/profile.py` | `MemoryService` (in-memory for tests, `FirestoreMemoryService` for real), keyed by `user_id::plan`. `remember_fact`, `correct_fact`, and `forget_fact` (explicit deletion, audit trail preserved but excluded from `active_facts`). |
 | Packet + log writer | `artifacts/packet.py` | Renders the one-page `packet.pdf` (reportlab): medication, NDC, plan, last fill, days supply, **calculator-derived** next eligible date, denial reason, phone script. |
 | Job runner | `job/tick.py` | `run_chase_tick` wires `EligibilityValidator` + the packet writer through `agentspine.run_tick`. `append_followup_entry` is the later Scheduler tick: appends a second, genuinely time-delayed `log.jsonl` entry, idempotently. |
