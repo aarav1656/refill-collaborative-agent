@@ -79,10 +79,9 @@ log "Refill deploy: project=${PROJECT_ID} region=${REGION} tag=${IMAGE_TAG}"
 # ---------------------------------------------------------------------------
 log "1/3 build ${IMAGE}"
 step "build context is this repo root; agentspine is vendored in-repo"
-gcloud builds submit "${REPO_ROOT}" \
-  --project "${PROJECT_ID}" \
-  --region "${REGION}" \
-  --config - <<EOF
+CLOUDBUILD_CFG="$(mktemp -t refill-cloudbuild-XXXXXX.yaml)"
+trap 'rm -f "${CLOUDBUILD_CFG}"' EXIT
+cat > "${CLOUDBUILD_CFG}" <<EOF
 steps:
   - name: gcr.io/cloud-builders/docker
     args: ["build", "-f", "Dockerfile", "-t", "${IMAGE}", "."]
@@ -90,6 +89,10 @@ images: ["${IMAGE}"]
 options:
   logging: CLOUD_LOGGING_ONLY
 EOF
+gcloud builds submit "${REPO_ROOT}" \
+  --project "${PROJECT_ID}" \
+  --region "${REGION}" \
+  --config "${CLOUDBUILD_CFG}"
 
 # ---------------------------------------------------------------------------
 # 2. The two jobs. No API key anywhere: GOOGLE_GENAI_USE_VERTEXAI=TRUE routes
