@@ -40,7 +40,7 @@ flowchart LR
 
 ## Why the validator has veto power
 
-`agentspine.run_tick()` (`projects/shared/agentspine/job.py`) calls
+`agentspine.run_tick()` (`agentspine/job.py`, vendored in this repo) calls
 `validator.verdict(context)` and only calls `artifact_fn` when
 `verdict.passed` is true; on a failed verdict it calls
 `backend.mark_rejected()` and returns without writing anything. Wired with
