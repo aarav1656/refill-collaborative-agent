@@ -188,3 +188,19 @@ def test_job_main_chase_agreement_issues_the_packet(monkeypatch, tmp_path):
     artifacts = LocalBackend(str(tmp_path))
     paths = artifacts.list_prefix("chase")
     assert any(p.endswith("packet.pdf") for p in paths)
+
+
+def test_job_main_followup_with_no_run_id_is_a_clean_no_op(monkeypatch):
+    """A Cloud Scheduler tick fires this job on a fixed cadence with no
+    REFILL_RUN_ID -- that is the common case, not an error. Regression
+    test for a real bug caught on the live deploy: main() used to raise
+    SystemExit here, which made every unattended scheduler execution
+    fail with exit code 1 and paint the Cloud Run Jobs console red.
+    infra/deploy.sh has always documented this as "a clean no-op exit 0,
+    not a crash" -- main() must actually honor that."""
+    monkeypatch.setenv("REFILL_MODE", "followup")
+    monkeypatch.delenv("REFILL_RUN_ID", raising=False)
+
+    exit_code = job_main.main()
+
+    assert exit_code == 0

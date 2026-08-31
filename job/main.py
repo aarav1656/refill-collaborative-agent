@@ -66,6 +66,8 @@ Environment variables (all optional except where noted):
                            so two ticks for the same fill collapse onto one
                            run_id (never wall-clock time).
     REFILL_RUN_ID          followup mode only: which run to append to.
+                           unset -> clean no-op, exit 0 (the Scheduler's
+                           unattended cadence ticks never set this).
     REFILL_FOLLOWUP_TEXT   followup mode only: the drafted text.
 
 No secrets are read from disk and none are baked into the image; GCP access
@@ -200,7 +202,16 @@ def main() -> int:
     if mode == "followup":
         run_id = os.environ.get("REFILL_RUN_ID")
         if not run_id:
-            raise SystemExit("REFILL_RUN_ID is required in followup mode")
+            # The Scheduler fires this job on a fixed cadence with no
+            # REFILL_RUN_ID -- it is only set via --update-env-vars for a
+            # specific on-camera follow-up. A tick with nothing to follow
+            # up on is a legitimate, expected outcome, not a crash: match
+            # infra/deploy.sh's documented "clean no-op exit 0" contract
+            # instead of raising, so the scheduled ticks that make up most
+            # of this job's executions don't paint the Cloud Run Jobs
+            # console red with false failures.
+            print("mode=followup run_id=(none) log_uri=no-op (no REFILL_RUN_ID set)")
+            return 0
         text = os.environ.get(
             "REFILL_FOLLOWUP_TEXT",
             "No payer response yet. Call the plan and read the phone script in packet.pdf.",
