@@ -1,5 +1,9 @@
 # Refill
 
+**Try it out (no install): https://refill-collaborative-agent.vercel.app** runs
+the offline end-to-end demo in your browser and shows the wrong date getting
+vetoed live.
+
 An adult child is managing a parent's specialty medication refill denial.
 Refill asks the questions a pharmacy would ask, computes eligibility
 itself, and produces a one-page packet and phone script before the
