@@ -1,4 +1,4 @@
-# Architecture — Refill
+# Architecture: Refill
 
 **Status:** Every component below is implemented and unit-tested (64 tests,
 offline, no model/network calls). Cloud deploy scripts (`infra/`) are still
@@ -64,7 +64,7 @@ run does not duplicate the entry (`tests/test_job_tick.py::TestFollowupTick`).
 
 `MemoryService.remember_fact` writes synchronously (a plain Firestore
 `set()`, not ADK's `add_session_to_memory`), so there is no extraction LRO
-to race — `active_facts()` called immediately after is guaranteed to see
+to race, `active_facts()` called immediately after is guaranteed to see
 the write. See the docstring in `memory/profile.py` for the full reasoning;
 this sidesteps DESIGN.md's named ADK limit by construction.
 

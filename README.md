@@ -121,28 +121,28 @@ clone. See `LIMITATIONS.md`.
 
 ## Layout
 
-- `validator/eligibility.py` — the calculator. Unit tested, including leap
+- `validator/eligibility.py`: the calculator. Unit tested, including leap
   year, zero early days, and missing `days_supply`.
-- `validator/refill_validator.py` — wraps the calculator as an
+- `validator/refill_validator.py`: wraps the calculator as an
   `agentspine.Validator` (the veto).
-- `agent/denial_letter.py` — deterministic field extraction from an
+- `agent/denial_letter.py`: deterministic field extraction from an
   uploaded denial letter.
-- `agent/dialogue.py` — deterministic clarifying-question state machine:
+- `agent/dialogue.py`: deterministic clarifying-question state machine:
   which fields are still missing, in what order.
-- `agent/refill_agent.py` — the ADK `LlmAgent` (Gemini 3.5 Flash) with the
+- `agent/refill_agent.py`: the ADK `LlmAgent` (Gemini 3.5 Flash) with the
   calculator bound in as a tool.
-- `memory/profile.py` — Firestore-backed profile memory keyed by user and
+- `memory/profile.py`: Firestore-backed profile memory keyed by user and
   plan, with explicit `forget_fact` and `correct_fact` paths.
-- `artifacts/packet.py` — the one-page reportlab PDF.
-- `job/tick.py` — wires the validator and packet writer through
+- `artifacts/packet.py`: the one-page reportlab PDF.
+- `job/tick.py`: wires the validator and packet writer through
   `agentspine.run_tick`, plus the delayed follow-up tick that appends a
   second `log.jsonl` entry.
-- `job/main.py` — the Cloud Run Job entrypoint. `REFILL_MODE` selects
+- `job/main.py`: the Cloud Run Job entrypoint. `REFILL_MODE` selects
   chase or followup.
-- `agentspine/` — the shared spine this repo runs on.
-- `fixtures/sample_denial_letter.txt` — synthetic sample, clearly marked,
+- `agentspine/`: the shared spine this repo runs on.
+- `fixtures/sample_denial_letter.txt`: synthetic sample, clearly marked,
   no real patient data.
-- `tests/` — 68 offline tests, no network and no model calls.
+- `tests/`: 68 offline tests, no network and no model calls.
 
 ## Bounded authority
 
