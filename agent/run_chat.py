@@ -30,11 +30,45 @@ import sys
 from agent.refill_agent import ProposalRecord, build_refill_agent
 
 API_KEY_VARS = ("GOOGLE_API_KEY", "GEMINI_API_KEY")
+_VERTEX_ENV_VARS = ("GOOGLE_GENAI_USE_ENTERPRISE", "GOOGLE_GENAI_USE_VERTEXAI")
 
 APP_NAME = "refill"
 
 
+def _vertex_mode_requested() -> bool:
+    """True if the environment asks for Vertex AI mode, the same way
+    `google.genai`'s own client resolves it (matches Sovereign's
+    `agent/tools.py:_vertex_mode_requested`, same bug class)."""
+    for var in _VERTEX_ENV_VARS:
+        value = os.environ.get(var)
+        if value is not None:
+            return value.strip().lower() in ("true", "1")
+    return False
+
+
 def require_api_key() -> None:
+    """Fail loud, for whichever auth mode is actually selected.
+
+    Vertex mode (`GOOGLE_GENAI_USE_VERTEXAI=TRUE`) authenticates via the
+    Cloud Run Job's own service account through Application Default
+    Credentials, not an API key. Requiring `GOOGLE_API_KEY`/`GEMINI_API_KEY`
+    unconditionally made the real deploy path -- no key anywhere -- fail
+    even when it would otherwise work. `google.adk`'s `LlmAgent` already
+    resolves Vertex mode from these same env vars on its own; this check
+    only needs to confirm a project is configured before proceeding.
+    """
+    if _vertex_mode_requested():
+        if not os.environ.get("GOOGLE_CLOUD_PROJECT"):
+            raise SystemExit(
+                "GOOGLE_GENAI_USE_VERTEXAI is set but GOOGLE_CLOUD_PROJECT "
+                "is not: set GOOGLE_CLOUD_PROJECT (and normally "
+                "GOOGLE_CLOUD_LOCATION) before running the Refill agent in "
+                "Vertex AI mode. Authentication itself comes from "
+                "Application Default Credentials -- the Cloud Run Job's "
+                "service account in production, or `gcloud auth "
+                "application-default login` locally -- not from an API key."
+            )
+        return
     if not any(os.environ.get(v) for v in API_KEY_VARS):
         raise SystemExit(
             "GOOGLE_API_KEY (or GEMINI_API_KEY) is not set. The Refill agent "
