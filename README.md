@@ -4,12 +4,25 @@
 the offline end-to-end demo in your browser and shows the wrong date getting
 vetoed live.
 
-An adult child is managing a parent's specialty medication refill denial.
-Refill asks the questions a pharmacy would ask, computes eligibility
-itself, and produces a one-page packet and phone script before the
-caregiver calls the payer.
+Every month, someone managing a parent's specialty medication gets a
+denial letter, has no idea what the plan's early-refill rule actually
+is, and burns an afternoon on hold learning what turns out to be
+arithmetic over three known numbers: last fill date, days supply, and
+however many days early the plan allows.
+
+Refill asks the questions a pharmacy would ask, then does the
+arithmetic itself with a deterministic calculator that has veto power
+over the model. Gemini proposes a next-eligible date through an ADK
+tool call. If that date disagrees with the calculator's own answer,
+the run is rejected and **zero artifacts are produced**, full stop.
+The model is not allowed to argue past a disagreement or try a second
+guess. This is the difference between a chat assistant that sounds
+confident and a tool a caregiver can actually trust with her mother's
+medication: the calculator, not the model's fluency, is what decides.
 
 **Track: The Collaborative Partner.**
+
+![Refill request flow: a denial letter is parsed by agent/denial_letter.py, missing fields tracked by agent/dialogue.py against Firestore memory, an ADK LlmAgent on Gemini 2.5 Flash proposes a next-eligible date, validator/eligibility.py runs the real calculator and either agrees (packet.pdf written to GCS, later a Cloud Scheduler follow-up) or disagrees (run rejected, zero artifacts).](docs/architecture/architecture.png)
 
 Contest requirements, and where each one lives in this repo:
 
@@ -131,10 +144,14 @@ only. Scheduling the chase itself would be background-execution theatre.
 The deploy expects two service accounts, `refill-job-sa` and
 `refill-scheduler-sa`, to already exist in the project.
 
-**Honest status:** the deploy and teardown scripts are written and syntax
-checked, but they have not been run end to end against a live billed GCP
-project. Everything under "Quick start" has been verified from a clean
-clone. See `LIMITATIONS.md`.
+**Deployed status:** `infra/deploy.sh` has been run end to end against a
+live billed GCP project: two Cloud Run Jobs built from one image, a
+real Firestore-backed idempotency claim, a real `packet.pdf` and
+`log.jsonl` written to a real GCS bucket, and both the accepted path
+and the rejected path exercised against the deployment before tearing
+it down. See `LIMITATIONS.md` for what's still scoped out (the live
+deploy predates the ADK chase-mode wiring fix and hasn't been
+re-verified against it end to end).
 
 ## Layout
 
