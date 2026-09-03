@@ -23,3 +23,11 @@ service-account*.json
 *.demo-break-backup
 .vercel
 .filming/
+
+# Submission-prep meta docs (kept local, not part of the shipped project)
+SUBMISSION.md
+DEMO_SCRIPT.md
+DEVPOST_STORY.md
+DEVPOST_STORY_DRAFT.md
+RED_GREEN.md
+LIMITATIONS.md

@@ -54,7 +54,7 @@ Environment variables (all optional except where noted):
                            the real ADK agent to propose a date; this
                            value, when set, is passed to the agent as its
                            WORKING ESTIMATE hint so the on-camera "force a
-                           wrong date" demo case (`DEMO_SCRIPT.md`,
+                           wrong date" demo case (see
                            `infra/deploy.sh`) still reliably reproduces a
                            DISAGREE -- but the value that actually reaches
                            the validator is still whatever the model

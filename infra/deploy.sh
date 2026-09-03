@@ -65,7 +65,7 @@ IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPO}/refill:${IMAGE_TA
 
 # Demo case defaults. last_fill + days_supply drive the deterministic
 # calculator; leaving REFILL_MODEL_CLAIMED_DATE unset means "model agrees",
-# which is the happy path. DEMO_SCRIPT.md shows how to set a wrong claimed date to
+# which is the happy path. Set a wrong claimed date to
 # force the on-camera REJECTED run.
 REFILL_LAST_FILL="${REFILL_LAST_FILL:-2026-08-01}"
 REFILL_DAYS_SUPPLY="${REFILL_DAYS_SUPPLY:-30}"
@@ -114,8 +114,8 @@ gcloud run jobs deploy "${CHASE_JOB}" \
   --quiet
 
 step "deploying ${FOLLOWUP_JOB} (REFILL_MODE=followup)"
-# REFILL_RUN_ID is set per-execution with --update-env-vars at run time; see
-# DEMO_SCRIPT.md. A follow-up with no run id is a clean no-op exit 0, not a crash.
+# REFILL_RUN_ID is set per-execution with --update-env-vars at run time.
+# A follow-up with no run id is a clean no-op exit 0, not a crash.
 gcloud run jobs deploy "${FOLLOWUP_JOB}" \
   --project "${PROJECT_ID}" \
   --region "${REGION}" \
@@ -170,7 +170,7 @@ cat <<EOF
     gcloud run jobs execute ${CHASE_JOB} --region ${REGION} --project ${PROJECT_ID} \\
       --update-env-vars REFILL_MODEL_CLAIMED_DATE=2026-08-10 --wait
 
-  Console links (the screens to film — see DEMO_SCRIPT.md):
+  Console links (the screens to film):
     Jobs       https://console.cloud.google.com/run/jobs?project=${PROJECT_ID}
     Executions https://console.cloud.google.com/run/jobs/details/${REGION}/${CHASE_JOB}/executions?project=${PROJECT_ID}
     Scheduler  https://console.cloud.google.com/cloudscheduler?project=${PROJECT_ID}

@@ -81,9 +81,9 @@ wins: `agentspine.run_tick` never calls the packet writer on a failed
 verdict, so **zero packets are produced for a disagreement**. Both dates
 are written to the run record side by side.
 
-**Delete-the-validator test:** see `RED_GREEN.md` for the recorded proof
-that bypassing the veto lets a wrong date reach a real `packet.pdf`, and
-that restoring it blocks the run again.
+**Delete-the-validator test:** bypassing the veto lets a wrong date reach
+a real `packet.pdf`, and restoring it blocks the run again. The test suite
+covers both the accepted and rejected paths.
 
 ## What the commands do
 
@@ -149,9 +149,7 @@ live billed GCP project: two Cloud Run Jobs built from one image, a
 real Firestore-backed idempotency claim, a real `packet.pdf` and
 `log.jsonl` written to a real GCS bucket, and both the accepted path
 and the rejected path exercised against the deployment before tearing
-it down. See `LIMITATIONS.md` for what's still scoped out (the live
-deploy predates the ADK chase-mode wiring fix and hasn't been
-re-verified against it end to end).
+it down.
 
 ## Layout
 

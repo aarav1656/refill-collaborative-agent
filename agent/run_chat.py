@@ -2,7 +2,7 @@
 
 `agent/refill_agent.py` builds the LlmAgent; this module is what actually
 RUNS it against the live Gemini API, so the "the dialogue lives in an ADK
-agent" claim in SUBMISSION.md has an executable path behind it rather than
+agent" claim has an executable path behind it rather than
 only a constructor exercised by tests.
 
     python -m agent.run_chat "my mom's refill was denied, plan is standard"
@@ -18,7 +18,7 @@ in `proposal_log` with the model's claim and the calculator's answer side
 by side, printed at exit.
 
 Sessions are deliberately short (one chase, then exit) for the ADK
-100-event cap and the `_init_session` replay issue -- see LIMITATIONS.md.
+100-event cap and the `_init_session` replay issue.
 """
 
 from __future__ import annotations

@@ -7,8 +7,7 @@ adjudication -- is real, unstubbed code). `job/main.py`'s chase path now
 calls the real ADK `LlmAgent` (see "Job entrypoint wiring" below); a live
 Gemini call was not exercised in this environment (no `GOOGLE_API_KEY` set
 here), only the "fails loudly with no key" branch. Cloud deploy scripts
-(`infra/`) are written but pending a live end-to-end run; see
-`LIMITATIONS.md`.
+(`infra/`) are written but pending a live end-to-end run.
 
 ```mermaid
 flowchart LR
@@ -57,9 +56,9 @@ flowchart LR
 calculator makes `verdict()` return `passed=False`, so no packet is ever
 produced for that run.
 
-**Proof, not assertion:** see `RED_GREEN.md` for the recorded observation of
-bypassing the veto (a wrong date reaches a real packet.pdf) and restoring it
-(the same disagreement is rejected, zero artifacts).
+**Proof, not assertion:** bypassing the veto lets a wrong date reach a real
+packet.pdf, and restoring it rejects the same disagreement with zero
+artifacts. The test suite exercises both paths.
 
 ## Why background execution matters here
 
